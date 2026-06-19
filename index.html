@@ -48,11 +48,20 @@
 
     .search-row {
       display: flex;
+      flex-direction: column;
       gap: 10px;
       width: 100%;
       max-width: 460px;
       margin-bottom: 28px;
     }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    #cityInput { flex: 2; }
+    #countryInput { flex: 1; }
 
     input {
       flex: 1;
@@ -207,7 +216,10 @@
   <p class="tagline">Real-time weather for any city in the world</p>
 
   <div class="search-row">
-    <input id="cityInput" type="text" placeholder="Enter city name…" />
+    <div class="input-row">
+      <input id="cityInput" type="text" placeholder="City (e.g. Bangalore)" />
+      <input id="countryInput" type="text" placeholder="Country (e.g. IN)" maxlength="2" />
+    </div>
     <button onclick="getWeather()">Search</button>
   </div>
 
@@ -259,9 +271,12 @@
 
     document.getElementById("cityInput")
       .addEventListener("keydown", e => { if (e.key === "Enter") getWeather(); });
+    document.getElementById("countryInput")
+      .addEventListener("keydown", e => { if (e.key === "Enter") getWeather(); });
 
     async function getWeather() {
-      const city = document.getElementById("cityInput").value.trim();
+      const city    = document.getElementById("cityInput").value.trim();
+      const country = document.getElementById("countryInput").value.trim().toUpperCase();
       const errorEl = document.getElementById("error");
       const card    = document.getElementById("weatherCard");
       const loader  = document.getElementById("loader");
@@ -271,15 +286,17 @@
 
       if (!city) { errorEl.textContent = "Please enter a city name."; return; }
 
+      const query = country ? `${city},${country}` : city;
+
       loader.classList.add("active");
 
       try {
         const res = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`
+          `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(query)}&appid=${API_KEY}&units=metric`
         );
 
         if (res.status === 401) throw new Error("Invalid API key. Please check your key.");
-        if (res.status === 404) throw new Error(`City "${city}" not found. Try another name.`);
+        if (res.status === 404) throw new Error(`"${city}" not found. Check city/country and try again.`);
         if (!res.ok)            throw new Error("Something went wrong. Please try again.");
 
         const data = await res.json();
